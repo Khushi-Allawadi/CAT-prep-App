@@ -1,826 +1,367 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>35-Day CAT Command Center (AI Integrated)</title>
+    <title>My 26-Day CAT Prep Plan (Nov 5 - Nov 30)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutral (Stone) with Amber Accent -->
+    <!-- Application Structure Plan: A task-oriented dashboard. The main view ("Today's Plan") shows only the current day's tasks to reduce user overwhelm, which was the core problem in the user's prompt. Navigation allows switching to a "Full Schedule" for overview and a "My Progress" view with a visual grid and donut chart for motivation. This structure transforms the static plan into an active, daily-use tool. The task cards are now dynamically shown/hidden based on the day's content (e.g., Mocks/Light days hide DILR/QA cards). -->
+    <!-- Visualization & Content Choices: Report Info: 26-day study plan (Nov 5 - Nov 30). Goal: Daily task management & progress tracking. Viz/Presentation: HTML/Tailwind cards for daily tasks (Inform); HTML table for full schedule (Organize); CSS Grid for visual progress (Inform); Chart.js Donut chart for summary (Inform). Interaction: JS-powered day selector (slider/buttons) to update daily tasks; "Mark Complete" button to update state and progress chart. Justification: This is the most intuitive UI for a daily plan, focusing the user on one day at a time while providing easy access to the big picture and progress-tracking. Library/Method: Vanilla JS for state & DOM, Chart.js for the donut chart. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
-        .card { background-color: white; border-radius: 1rem; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease; }
-        .accent-color { color: #522f67; /* Deep Purple */ }
-        .bg-accent { background-color: #7d4ba9; /* Lavender */ }
-        .bg-soft { background-color: #e3d9f0; }
-        .nav-button.active {
-            background-color: #522f67;
-            color: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            transform: scale(1.05);
-        }
-        .progress-bar-container { height: 10px; border-radius: 9999px; background-color: #ddd; }
-        .progress-bar { height: 10px; border-radius: 9999px; background-color: #7d4ba9; transition: width 0.5s ease; }
-        .study-slot {
-            background-color: #d1f3d4; /* Light Green */
-            color: #1f6424;
-            border-left: 4px solid #38a169;
-        }
-        .night-prep {
-            background-color: #e0e7ff; /* Light Blue */
-            color: #3f51b5;
-            border-left: 4px solid #3f51b5;
-        }
-        .break-slot {
-            background-color: #f5f5f5;
-            color: #6b7280;
-        }
-        .task-item {
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-        }
-        .task-item:hover {
-            background-color: #f7f3f9;
-        }
-        .task-item.checked .task-text {
-            text-decoration: line-through;
-            color: #a0a0a0;
-        }
-        .task-checkbox {
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            border: 2px solid #7d4ba9;
-            cursor: pointer;
+        .chart-container {
             position: relative;
-            background-color: white;
-            transition: all 0.2s;
-        }
-        .task-checkbox:checked {
-            background-color: #7d4ba9;
-            border-color: #7d4ba9;
-        }
-        .task-checkbox:checked::after {
-            content: '✔';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 14px;
-        }
-
-        /* Chat Styles */
-        #chat-messages {
+            width: 100%;
+            max-width: 300px;
             height: 300px;
-            overflow-y: auto;
-            border-bottom: 1px solid #eee;
+            max-height: 300px;
+            margin-left: auto;
+            margin-right: auto;
         }
-        .user-message {
-            background-color: #e3d9f0;
-            color: #522f67;
-            border-radius: 12px 12px 2px 12px;
-            align-self: flex-end;
+        body {
+            font-family: 'Inter', sans-serif;
         }
-        .assistant-message {
-            background-color: #f5f5f5;
-            color: #333;
-            border-radius: 12px 12px 12px 2px;
-            align-self: flex-start;
-        }
-        .drill-box {
-            background-color: #fff9e6;
-            border: 1px solid #ffcc00;
-            border-left: 4px solid #ffaa00;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     </style>
 </head>
-<body class="min-h-screen">
+<body class="bg-stone-50 text-stone-800 min-h-full flex flex-col">
 
-    <!-- Sticky Header for Day/Progress -->
-    <div class="sticky top-0 bg-white shadow-xl z-10">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="text-3xl font-extrabold accent-color">35-DAY COMMAND CENTER</h1>
-            <div class="text-right">
-                <p class="text-xs text-gray-500">Day Focus</p>
-                <p class="text-2xl font-bold accent-color">Day <span id="current-day-display">1</span> / 35</p>
+    <header class="bg-white shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <h1 class="text-2xl font-bold text-amber-600">My 26-Day CAT Prep Plan</h1>
+            <p class="text-stone-600">Locked-down schedule: Nov 5 - Nov 30. Good luck!</p>
+        </div>
+    </header>
+
+    <nav class="bg-stone-100 border-b border-stone-200">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-center space-x-4">
+            <button data-view="today" class="nav-button font-semibold text-amber-600 border-b-2 border-amber-600 px-3 py-3 text-sm">Today's Plan</button>
+            <button data-view="schedule" class="nav-button font-medium text-stone-500 hover:text-stone-700 border-b-2 border-transparent hover:border-stone-300 px-3 py-3 text-sm">Full Schedule</button>
+            <button data-view="progress" class="nav-button font-medium text-stone-500 hover:text-stone-700 border-b-2 border-transparent hover:border-stone-300 px-3 py-3 text-sm">My Progress</button>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow">
+        
+        <div id="today-view" class="app-view">
+            <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <h2 class="font-semibold text-amber-800">Your Daily Focus</h2>
+                <p class="text-sm text-amber-700">This view changes based on the day's tasks. Convocation days (Nov 12th & 13th) are set to be very light. Start tonight with Day 1!</p>
+            </div>
+
+            <div class="mb-6">
+                <label for="day-slider" class="block text-sm font-medium text-stone-700">Select Day: <span id="day-label" class="font-bold text-amber-600">1</span></label>
+                <input id="day-slider" type="range" min="1" max="26" value="1" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+            </div>
+
+            <div class="mb-6 text-center">
+                <h2 class="text-3xl font-bold text-stone-900" id="today-title">Day 1: Setup/Light Reading (Nov 5)</h2>
+                <p class="text-lg text-amber-600 font-semibold" id="today-phase">Phase I: Building Momentum</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="task-cards">
+                <div class="bg-white shadow-lg rounded-lg p-6 transition duration-300" id="card-varc">
+                    <h3 class="text-xl font-semibold text-stone-700 mb-3">VARC Focus</h3>
+                    <p class="text-stone-600" id="task-varc"></p>
+                </div>
+                <div class="bg-white shadow-lg rounded-lg p-6 transition duration-300" id="card-dilr">
+                    <h3 class="text-xl font-semibold text-stone-700 mb-3">DILR Focus</h3>
+                    <p class="text-stone-600" id="task-dilr"></p>
+                </div>
+                <div class="bg-white shadow-lg rounded-lg p-6 transition duration-300" id="card-qa">
+                    <h3 class="text-xl font-semibold text-stone-700 mb-3">QA Focus</h3>
+                    <p class="text-stone-600" id="task-qa"></p>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <button id="mark-complete-btn" class="bg-amber-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-amber-700 transition duration-300">
+                    Mark Day 1 as Complete
+                </button>
             </div>
         </div>
-        <div class="progress-bar-container mx-auto max-w-7xl px-4 mb-3">
-            <div id="day-progress-bar" class="progress-bar" style="width: 0%;"></div>
+
+        <div id="schedule-view" class="app-view hidden">
+             <div class="mb-6 p-4 bg-stone-100 border border-stone-200 rounded-lg">
+                <h2 class="font-semibold text-stone-800">Full 26-Day Schedule (Nov 5 - Nov 30)</h2>
+                <p class="text-sm text-stone-600">This is the complete plan. Note the light work set for your convocation on Nov 12th & 13th.</p>
+            </div>
+            <div class="bg-white shadow-lg rounded-lg overflow-x-auto">
+                <table class="min-w-full divide-y divide-stone-200">
+                    <thead class="bg-stone-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Day</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Focus</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">VARC</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">DILR</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">QA</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-stone-200" id="schedule-table-body">
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-8">
-
-        <!-- Day Selector Section -->
-        <section class="mb-8 card p-4">
-            <h2 class="text-lg font-bold mb-3 accent-color">Jump to Day:</h2>
-            <div id="day-selector" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-2">
+        <div id="progress-view" class="app-view hidden">
+            <div class="mb-6 p-4 bg-stone-100 border border-stone-200 rounded-lg">
+                <h2 class="font-semibold text-stone-800">Your Progress</h2>
+                <p class="text-sm text-stone-600">Keep up the great work! Each completed day will light up here. This is a marathon, not a sprint.</p>
             </div>
-        </section>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <!-- COLUMN 1: Daily Focus & Routine -->
-            <div class="lg:col-span-2">
-
-                <!-- Daily Action Panel / To-Do List -->
-                <section id="daily-plan" class="mb-8 card p-6">
-                    <div class="flex justify-between items-center border-b pb-3 mb-4">
-                        <h2 class="text-2xl font-bold accent-color" id="plan-day-title">Day 1 (Oct 25): Drill Day</h2>
-                        <div class="bg-accent text-white px-3 py-1 rounded-full text-sm font-semibold">
-                            <span id="daily-progress-count">0</span> / <span id="daily-total-count">6</span> Completed
-                        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white shadow-lg rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-stone-700 mb-4 text-center">Completion Tracker</h3>
+                    <div id="progress-grid" class="grid grid-cols-7 gap-2 max-w-sm mx-auto">
                     </div>
-                    
-                    <h3 class="text-xl font-semibold mb-3 text-gray-700">Daily Non-Negotiable Tasks:</h3>
-                    <div id="task-list" class="space-y-2">
-                        <!-- Tasks dynamically injected here -->
-                    </div>
-
-                    <!-- Drill Generation Output -->
-                    <div id="drill-output" class="hidden mt-6 p-4 drill-box rounded-lg">
-                        <h4 class="font-bold text-lg text-yellow-700 mb-2">✨ Drill Master Questions</h4>
-                        <div id="drill-content" class="whitespace-pre-wrap text-sm text-gray-800"></div>
-                        <p class="text-xs text-gray-600 mt-2 italic">Solve these, then ask the Quick Prep Assistant for answers or explanations!</p>
-                    </div>
-
-                    <p class="text-sm text-gray-500 mt-4 pt-4 border-t border-dashed">
-                        *Checking off a task automatically saves your progress locally.*
-                    </p>
-                </section>
-                
-                <!-- Non-Negotiable Routine -->
-                <section id="routine" class="mb-8 card p-6">
-                    <h3 class="text-2xl font-bold accent-color mb-4 border-b pb-2">Non-Negotiable Daily Routine (10 Hour Target)</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <!-- Day Time Routine -->
-                        <div>
-                            <h4 class="font-bold text-lg text-green-700 mb-2">Day Routine (Focused Execution)</h4>
-                            <div class="space-y-2">
-                                <div class="break-slot p-2 rounded-lg">**06:00 - 07:00 AM:** Wake Up, Hydrate, 15 min Walk/Light Exercise</div>
-                                <div class="study-slot p-2 rounded-lg">**07:00 - 09:00 AM:** Slot 1: VARC (Reading & Accuracy Drills)</div>
-                                <div class="break-slot p-2 rounded-lg">**09:00 - 09:30 AM:** Breakfast & Mental Reset</div>
-                                <div class="study-slot p-2 rounded-lg">**09:30 - 01:30 PM:** Slot 2: Mock Test / Deep MTA (4 Hours)</div>
-                                <div class="break-slot p-2 rounded-lg">**01:30 - 02:30 PM:** Lunch & Rest/Power Nap (Crucial)</div>
-                                <div class="study-slot p-2 rounded-lg">**02:30 - 04:30 PM:** Slot 3: Drilling (Weak Quant/DILR Sets)</div>
-                                <div class="break-slot p-2 rounded-lg">**04:30 - 05:00 PM:** Tea/Coffee & Short Break</div>
-                                <div class="study-slot p-2 rounded-lg">**05:00 - 07:00 PM:** Slot 4: Buffer / Comprehensive Revision</div>
-                            </div>
-                        </div>
-                        <!-- Night Time Routine -->
-                        <div>
-                            <h4 class="font-bold text-lg text-indigo-700 mb-2">Night Routine (Consolidation & Sleep)</h4>
-                            <div class="space-y-2">
-                                <div class="break-slot p-2 rounded-lg">**07:00 - 09:00 PM:** Dinner, Family Time, Relaxation</div>
-                                <div class="night-prep p-2 rounded-lg">**09:00 - 09:30 PM:** Review Error Log & Key Takeaways of the Day</div>
-                                <div class="night-prep p-2 rounded-lg">**09:30 - 10:00 PM:** Plan/Organize Desk for Tomorrow's Session</div>
-                                <div class="night-prep p-2 rounded-lg">**10:00 - 11:00 PM:** Device Firewall (No Screens). Read a physical book.</div>
-                                <div class="break-slot p-2 rounded-lg">**11:00 PM:** Lights Out (Ensure 7+ hours of quality sleep)</div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <!-- COLUMN 2: Trackers and AI Assistant -->
-            <div class="lg:col-span-1">
-
-                <!-- Overall Progress Tracker -->
-                <section class="mb-8 card p-6 flex flex-col items-center">
-                    <h3 class="text-2xl font-bold accent-color mb-4">Overall 35-Day Progress</h3>
-                    <div class="w-full max-w-xs h-64 relative">
+                </div>
+                <div class="bg-white shadow-lg rounded-lg p-6">
+                    <h3 class="text-xl font-semibold text-stone-700 mb-4 text-center">Overall Summary</h3>
+                    <div class="chart-container">
                         <canvas id="progress-chart"></canvas>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span id="completion-percentage-text" class="text-5xl font-extrabold accent-color">0%</span>
-                            <span class="text-md text-gray-500">Scheduled</span>
-                        </div>
                     </div>
-                    <p class="text-lg font-semibold accent-color mt-4">Remaining: <span id="days-remaining" class="text-2xl font-extrabold">35</span> Days</p>
-                </section>
-
-                <!-- AI Quick Prep Assistant -->
-                <section class="mb-8 card p-6">
-                    <h3 class="text-2xl font-bold accent-color mb-4 flex items-center">
-                        ✨ Quick Prep Assistant
-                    </h3>
-                    <div id="chat-messages" class="flex flex-col space-y-4 p-3 mb-4">
-                        <div class="assistant-message max-w-[85%] p-3 text-sm">
-                            Hello! I'm your study partner. Ask me for a formula, a quick concept recap, or a **'Motivational Pep Talk'** when you need a boost!
-                        </div>
-                    </div>
-                    <div class="flex">
-                        <input type="text" id="chat-input" placeholder="Ask for a formula or pep talk..." class="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                        <button id="chat-send-btn" class="bg-accent text-white p-3 rounded-r-lg font-semibold hover:bg-opacity-90 transition duration-150 flex items-center justify-center">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        </button>
-                    </div>
-                    <div id="chat-loading" class="hidden text-sm mt-2 text-yellow-600">Assistant is thinking...</div>
-                </section>
-
-                <!-- MTA Protocol -->
-                <section id="strategy" class="mb-8 card p-6 bg-soft">
-                    <h3 class="text-2xl font-bold accent-color mb-4 border-b pb-2">MTA Protocol (Deep Analysis)</h3>
-                    <p class="text-sm text-gray-700 mb-4">
-                        MTA is the single biggest driver of score improvement in these 35 days. Follow these steps religiously after every Mock Test.
-                    </p>
-                    <div id="mta-accordion" class="space-y-3">
-                        <!-- MTA Steps dynamically injected here -->
-                    </div>
-                </section>
+                </div>
             </div>
         </div>
     </main>
 
-<script>
-    // --- API Configuration ---
-    // The Gemini API key will be provided automatically in the canvas environment.
-    const apiKey = ""; 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    <footer class="bg-stone-100 border-t border-stone-200 mt-12">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center">
+            <p class="text-sm text-stone-500">Stay focused and consistent. You've got this!</p>
+        </div>
+    </footer>
 
-    // --- DATA ---
-    const PLAN_DATA = [
-        { day: 1, date: 'Oct 25', phase: 1, title: 'Get Back in Gear', tasks: [
-            { text: 'VARC: 3 RCs (Easy) - Focus on Main Idea.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 20 Arithmetic Qs (P&L) - Timed.', slot: 'Slot 3', type: 'QUANT' },
-            { text: 'Revision: Light Quant/DILR Revision of weak topic.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Finalize study space, re-read formula sheet.', slot: 'Night Prep', type: 'NONE' },
-        ], full_mock: false },
-        { day: 2, date: 'Oct 26', phase: 1, title: 'Baseline Test Day', tasks: [
-            { text: 'Slot 2: Mock Test 1 (Full) - Exact Slot Time.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA Step 1 & 2 (Easy Review & Hidden Gems) for Quant.', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'MTA Step 3 & 4 (Strategy Fix & Deep Dive) for VARC.', slot: 'Slot 4', type: 'NONE' },
-            { text: 'Strategy: Identify 3 biggest time sinks from Mock 1.', slot: 'Night Prep', type: 'NONE' },
-        ], full_mock: true },
-        { day: 3, date: 'Oct 27', phase: 1, title: 'MTA Deep Dive (Quant)', tasks: [
-            { text: 'VARC: 4 RCs (Medium) - Target 70% accuracy.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 20 Arithmetic Qs (Ratio/Mixtures) - Timed.', slot: 'Slot 3', type: 'QUANT' },
-            { text: 'MTA: Re-solve 5 key Quant questions from Mock 1.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Review DILR Set Selection Strategy.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 4, date: 'Oct 28', phase: 1, title: 'MTA Deep Dive (DILR)', tasks: [
-            { text: 'VARC: 10 PA/Odd One Out Sets - Analyze reasoning.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 1 DILR Set (Grid/Linear) - Timed (12 mins).', slot: 'Slot 3', type: 'DILR' },
-            { text: 'MTA: Review DILR sets skipped in Mock 1.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: VARC: Focus on Main Idea extraction (Summarize all 10 RCs from D1/D3).', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 5, date: 'Oct 29', phase: 1, title: 'Quant Sectional Test', tasks: [
-            { text: 'VARC: 3 RCs + 10 PA Sets.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Slot 2: Sectional Test (Quant) - Follow Mock 1 strategy.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA: Deep Analysis of Quant Sectional (4 hrs).', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'Strategy: Update Error Log with Sectional mistakes.', slot: 'Night Prep', type: 'NONE' },
-        ], full_mock: false },
-        { day: 6, date: 'Oct 30', phase: 1, title: 'MTA Deep Dive (VARC)', tasks: [
-            { text: 'VARC: 4 RCs (Medium-Hard) - Focus on Inference Qs.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 20 Algebra Qs (Linear/Quad) - Timed.', slot: 'Slot 3', type: 'QUANT' },
-            { text: 'MTA: Full VARC Review (Mock 1 & Sectional Test).', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Review Quant approach: Identify Time Traps.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 7, date: 'Oct 31', phase: 1, title: 'Revision & DILR Sets', tasks: [
-            { text: 'VARC: 10 PA/Odd One Out Sets.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 2 DILR Sets (Venn Diagrams) - Timed.', slot: 'Slot 3', type: 'DILR' },
-            { text: 'Revision: Review Error Log & choose 3 topics to revise.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Set the target for DILR Sectional tomorrow.', slot: 'Night Prep', type: 'NONE' },
-        ], full_mock: false },
-        { day: 8, date: 'Nov 1', phase: 1, title: 'DILR Sectional Test', tasks: [
-            { text: 'Slot 2: Sectional Test (DILR) - Strict Time Box.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA: 4 Hrs Deep Analysis of DILR Sectional.', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'Strategy: Focus on DILR (Process errors, not calculation errors).', slot: 'Slot 4', type: 'NONE' },
-            { text: 'VARC: Quick 2 RCs on a non-fiction topic.', slot: 'Slot 1', type: 'VARC' },
-        ], full_mock: false },
-        { day: 9, date: 'Nov 2', phase: 1, title: 'Mock Test 2 Day', tasks: [
-            { text: 'Slot 2: Mock Test 2 (Full) - Execute new strategies.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA: Full Review (4.5 Hrs) & Strategy Fix.', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'Strategy: Full Review: Compare Mock 1 vs Mock 2 attempts/accuracy.', slot: 'Night Prep', type: 'NONE' },
-            { text: 'VARC: Review all vocab words encountered this week.', slot: 'Slot 1', type: 'NONE' },
-        ], full_mock: true },
-        { day: 10, date: 'Nov 3', phase: 1, title: 'MTA Deep Dive (Quant)', tasks: [
-            { text: 'VARC: 4 RCs (Medium) - Target 75% accuracy.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 20 Geometry Qs (Area/Triangles) - Timed.', slot: 'Slot 3', type: 'QUANT' },
-            { text: 'MTA: Deep Dive into Quant errors from Mock 2.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Review RC Accuracy vs. Speed.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 11, date: 'Nov 4', phase: 1, title: 'MTA Deep Dive (DILR)', tasks: [
-            { text: 'VARC: 10 PA/Odd One Out Sets.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 2 DILR Sets (Scheduling) - Timed.', slot: 'Slot 3', type: 'DILR' },
-            { text: 'MTA: Deep Dive into DILR errors from Mock 2.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Focus on skipping tough Geometry/Modern Math questions.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 12, date: 'Nov 5', phase: 2, title: 'Mock Test 3 Day', tasks: [
-            { text: 'Slot 2: Mock Test 3 (Full) - Strict Focus on Timing.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA: 4.5 Hrs MTA: Focus on VARC (Strategy and Review).', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'Strategy: Write down 3 key takeaways for VARC accuracy.', slot: 'Night Prep', type: 'NONE' },
-            { text: 'Quant: Quick review of 5 key Algebra formulas.', slot: 'Slot 1', type: 'NONE' },
-        ], full_mock: true },
-        { day: 13, date: 'Nov 6', phase: 2, title: 'MTA Deep Dive (VARC)', tasks: [
-            { text: 'VARC: 4 RCs (Hard) - Note down key vocabulary.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 20 Algebra Qs (Inequalities) - Timed.', slot: 'Slot 3', type: 'QUANT' },
-            { text: 'MTA: Deep Dive into VARC errors from Mock 3.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'DILR: Try 1 \'unconventional\' set type (e.g., Games).', slot: 'Slot 4', type: 'DILR' },
-        ], full_mock: false },
-        { day: 14, date: 'Nov 7', phase: 2, title: 'DILR & Quant Revision', tasks: [
-            { text: 'VARC: 10 PA/Odd One Out Sets.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 2 DILR Sets (Mixed Charts) - Timed.', slot: 'Slot 3', type: 'DILR' },
-            { text: 'Revision: Re-solve 5 key Quant questions from past mocks.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Full Error Log Review (D1-D14).', slot: 'Night Prep', type: 'NONE' },
-        ], full_mock: false },
-        { day: 15, date: 'Nov 8', phase: 2, title: 'VARC Sectional Test', tasks: [
-            { text: 'Slot 2: Sectional Test (VARC) - Aggressive Pacing.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'Drilling: 20 Modern Math Qs (Functions/Logs).', slot: 'Slot 3', type: 'QUANT' },
-            { text: 'MTA: Deep Analysis of VARC Sectional.', slot: 'Slot 4', type: 'NONE' },
-            { text: 'Strategy: Analyze VARC Sectional Test for consistent mistakes.', slot: 'Night Prep', type: 'NONE' },
-        ], full_mock: false },
-        { day: 16, date: 'Nov 9', phase: 2, title: 'Mock Test 4 Day', tasks: [
-            { text: 'Slot 2: Mock Test 4 (Full) - Focus on DILR selection.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA: 4.5 Hrs MTA: Focus on DILR (Selection of sets).', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'Strategy: Write down your DILR "Go/No-Go" rules.', slot: 'Night Prep', type: 'NONE' },
-            { text: 'VARC: Quick review of 2 RCs on Philosophy/Art.', slot: 'Slot 1', type: 'VARC' },
-        ], full_mock: true },
-        { day: 17, date: 'Nov 10', phase: 2, title: 'MTA Deep Dive (DILR)', tasks: [
-            { text: 'VARC: 3 RCs + 10 PA Sets.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 2 DILR Sets (Tournament) - Timed.', slot: 'Slot 3', type: 'DILR' },
-            { text: 'MTA: Deep Dive into DILR errors from Mock 4.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Quant: Review all Arithmetic formulas & quick Qs.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 18, date: 'Nov 11', phase: 2, title: 'MTA Deep Dive (Quant)', tasks: [
-            { text: 'VARC: 4 RCs (Medium) - Review Parajumble strategy.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 20 Arithmetic Qs (Compound Qs) - Timed.', slot: 'Slot 3', type: 'QUANT' },
-            { text: 'MTA: Deep Dive into Quant errors from Mock 4.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Review Parajumble strategy & practice 5 new sets.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 19, date: 'Nov 12', phase: 2, title: 'Mock Test 5 Day', tasks: [
-            { text: 'Slot 2: Mock Test 5 (Full) - Mental Simulation.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA: 4.5 Hrs MTA: Full Review - Score vs. Attempts.', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'Strategy: Analyze time allocation per section.', slot: 'Night Prep', type: 'NONE' },
-            { text: 'DILR: Quick review of 1 easy set for speed.', slot: 'Slot 1', type: 'NONE' },
-        ], full_mock: true },
-        { day: 20, date: 'Nov 13', phase: 2, title: 'MTA Deep Dive (VARC)', tasks: [
-            { text: 'VARC: 4 RCs (Medium-Hard) - Focus on question type.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 2 DILR Sets (Puzzles) - Timed.', slot: 'Slot 3', type: 'DILR' },
-            { text: 'MTA: Deep Dive into VARC errors from Mock 5.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: DILR: Re-solve easy sets for speed.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 21, date: 'Nov 14', phase: 2, title: 'Quant Revision & Sets', tasks: [
-            { text: 'VARC: 10 PA/Odd One Out Sets.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 20 Geometry Qs (Circles/Solids) - Timed.', slot: 'Slot 3', type: 'QUANT' },
-            { text: 'Revision: Transfer key learnings to a 1-page cheat sheet.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Final review of all DILR strategy notes.', slot: 'Night Prep', type: 'NONE' },
-        ], full_mock: false },
-        { day: 22, date: 'Nov 15', phase: 2, title: 'Quant Sectional Test', tasks: [
-            { text: 'Slot 2: Sectional Test (Quant) - Strict Pacing.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA: Analyze Quant Sectional Test. Re-do 10 questions.', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'VARC: 3 RCs (Light) - Focus on speed.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Strategy: Re-analyze Quant errors from Sectional Test.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 23, date: 'Nov 16', phase: 2, title: 'Mock Test 6 Day', tasks: [
-            { text: 'Slot 2: Mock Test 6 (Full) - Focus on Sectional Switch Strategy.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA: 4.5 Hrs MTA: Analyze how you shift between sections.', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'Strategy: Write down your 5 non-negotiable rules for Test Day.', slot: 'Night Prep', type: 'NONE' },
-            { text: 'Quant: Review 5 hardest questions from past 3 mocks.', slot: 'Slot 1', type: 'NONE' },
-        ], full_mock: true },
-        { day: 24, date: 'Nov 17', phase: 3, title: 'MTA Deep Dive (DILR)', tasks: [
-            { text: 'VARC: 3 RCs + 10 PA Sets.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 2 DILR Sets (Any Type) - Timed.', slot: 'Slot 3', type: 'DILR' },
-            { text: 'MTA: Deep Dive into DILR errors from Mock 6.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Consolidate DILR set templates/types.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 25, date: 'Nov 18', phase: 3, title: 'MTA Deep Dive (Quant)', tasks: [
-            { text: 'VARC: 4 RCs (Medium) - Review RC question types (Inference vs. Direct).', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 20 Algebra/Modern Math Qs - Timed.', slot: 'Slot 3', type: 'QUANT' },
-            { text: 'MTA: Deep Dive into Quant errors from Mock 6.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Review all Geometry formulas.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 26, date: 'Nov 19', phase: 3, title: 'Mock Test 7 Day', tasks: [
-            { text: 'Slot 2: Mock Test 7 (Full) - Test Day Simulation/Mental Prep.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA: 4.5 Hrs MTA: Review everything quickly (don\'t overthink).', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'Strategy: Focus only on execution, not the score. Visualize success.', slot: 'Night Prep', type: 'NONE' },
-            { text: 'VARC: Quick review of Parajumble techniques.', slot: 'Slot 1', type: 'VARC' },
-        ], full_mock: true },
-        { day: 27, date: 'Nov 20', phase: 3, title: 'MTA Deep Dive (VARC)', tasks: [
-            { text: 'VARC: 1 Editorial Read (30 mins).', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 1 DILR Set (Hard) - Untimed.', slot: 'Slot 3', type: 'DILR' },
-            { text: 'MTA: Deep Dive into VARC errors from Mock 7.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Quant: Review only the first 10 chapters of your notes.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 28, date: 'Nov 21', phase: 3, title: 'Formula & Error Log Review', tasks: [
-            { text: 'VARC: 3 RCs (Medium).', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: Re-solve 5 Hard PA Sets.', slot: 'Slot 3', type: 'VARC' },
-            { text: 'Revision: Review Error Log & Formulas (all 3 sections).', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Finalize your "go-to" easy DILR set types.', slot: 'Night Prep', type: 'NONE' },
-        ], full_mock: false },
-        { day: 29, date: 'Nov 22', phase: 3, title: 'DILR Sectional Test', tasks: [
-            { text: 'Slot 2: Sectional Test (DILR) - Focus on selection time.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA: Deep Analysis of DILR Test and Selection Time.', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'VARC: Quick review of Sentence Completion errors.', slot: 'Slot 1', type: 'NONE' },
-            { text: 'Strategy: DILR: No more than 3 minutes on selection.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 30, date: 'Nov 23', phase: 3, title: 'Mock Test 8 (Final)', tasks: [
-            { text: 'Slot 2: Mock Test 8 (Full) - Treat this as the exam.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'MTA: The Final Full Mock Review (4.5 Hrs).', slot: 'Slot 3/4', type: 'NONE' },
-            { text: 'Strategy: Complete "Strategy Fix" based on Mock 8 performance.', slot: 'Night Prep', type: 'NONE' },
-            { text: 'VARC: Quick review of all RC main ideas from this week.', slot: 'Slot 1', type: 'VARC' },
-        ], full_mock: true },
-        { day: 31, date: 'Nov 24', phase: 3, title: 'LITE Revision Day', tasks: [
-            { text: 'VARC: 2 RCs (Light) - Relaxed pace.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Drilling: 10 Mixed Quant Qs (from Error Log).', slot: 'Slot 3', type: 'QUANT' },
-            { text: 'Revision: Review all Error Log entries (no solving).', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Focus only on positive reinforcement and confidence.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 32, date: 'Nov 25', phase: 3, title: 'VARC Sectional Test (Final)', tasks: [
-            { text: 'Slot 2: Sectional Test (VARC) - Check final pacing comfort.', slot: 'Slot 2', type: 'NONE' },
-            { text: 'Drilling: Quick Formula Review (all sections).', slot: 'Slot 3', type: 'NONE' },
-            { text: 'VARC: 1 Editorial Read.', slot: 'Slot 1', type: 'VARC' },
-            { text: 'Strategy: Finalize your 5 VARC "Go-To" question types.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 33, date: 'Nov 26', phase: 3, title: 'LITE Revision Day', tasks: [
-            { text: 'VARC: Review Parajumbles (Technique, not solving).', slot: 'Slot 1', type: 'NONE' },
-            { text: 'Drilling: 10 Mixed DILR Qs (untimed).', slot: 'Slot 3', type: 'DILR' },
-            { text: 'Revision: Re-read your Strategy Fix rules.', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Confirm exam center logistics and travel plan.', slot: 'Night Prep', type: 'NONE' },
-        ], full_mock: false },
-        { day: 34, date: 'Nov 27', phase: 3, title: 'Final Review & Mental Prep', tasks: [
-            { text: 'Quant: Read all Formula Sheets (No solving).', slot: 'Slot 1', type: 'NONE' },
-            { text: 'DILR: Look over 10 solved DILR sets (Visualization).', slot: 'Slot 3', type: 'NONE' },
-            { text: 'VARC: Look over old VARC notes (main ideas, tone words).', slot: 'Slot 2/4', type: 'NONE' },
-            { text: 'Strategy: Mental Prep & Visualization. Organise Admit Card/ID.', slot: 'Slot 4', type: 'NONE' },
-        ], full_mock: false },
-        { day: 35, date: 'Nov 28', phase: 3, title: 'REST DAY (CRUCIAL!)', tasks: [
-            { text: 'REST: NO STUDY. Light exercise, movies, or relaxing.', slot: 'All Day', type: 'NONE' },
-            { text: 'Logistics: Early dinner, set clothes, pack pencil case.', slot: 'Evening', type: 'NONE' },
-            { text: 'MIND: Meditation or light walk. Absolutely NO study material.', slot: 'All Day', type: 'NONE' },
-            { text: 'Sleep: Lights out by 10:00 PM for maximum recovery.', slot: 'Night', type: 'NONE' },
-        ], full_mock: false }
-    ];
+    <script>
+        const scheduleData = [
+            { day: 1, date: 'Nov 5', phase: 'I', goal: 'Building Momentum', focus: 'Setup/Light Reading', varc: 'Read 1 RC passage slowly (untimed).', dilr: '', qa: '' },
+            { day: 2, date: 'Nov 6', phase: 'I', goal: 'Building Momentum', focus: 'MOCK 1 DAY', varc: 'Full Mock Test (2 hrs) + Analysis (1.5 hrs). Log all errors.', dilr: '', qa: '' },
+            { day: 3, date: 'Nov 7', phase: 'I', goal: 'Building Momentum', focus: 'P1: Arithmetic', varc: '2 RC Passages (Timed) + 5 PJ + 5 PS', dilr: '2 DILR Sets: Arrangements', qa: 'Arithmetic: Percentages + P&L Concepts/Practice' },
+            { day: 4, date: 'Nov 8', phase: 'I', goal: 'Building Momentum', focus: 'P1: Arithmetic', varc: '2 RC Passages (Timed) + 5 PJ + 5 PS', dilr: '2 DILR Sets: Team Selection', qa: 'Arithmetic: Ratio/Proportion + Averages Concepts/Practice' },
+            { day: 5, date: 'Nov 9', phase: 'I', goal: 'Building Momentum', focus: 'MOCK 2 DAY', varc: 'Full Mock Test (2 hrs) + Analysis (1.5 hrs). Review Error Log.', dilr: '', qa: '' },
+            { day: 6, date: 'Nov 10', phase: 'I', goal: 'Building Momentum', focus: 'P1: Arithmetic', varc: '2 RC Passages (Timed) + 5 PJ + 5 PS', dilr: '2 DILR Sets: Routes & Networks', qa: 'Arithmetic: Time & Work Concepts/Practice' },
+            { day: 7, date: 'Nov 11', phase: 'I', goal: 'Building Momentum', focus: 'P1: Arithmetic', varc: '2 RC Passages (Timed) + 5 PJ + 5 PS', dilr: 'Reflect & Re-solve: 2 DILR Sets from Error Log', qa: 'Arithmetic: Time-Speed-Distance Concepts/Practice' },
+            { day: 8, date: 'Nov 12', phase: 'I', goal: 'Building Momentum', focus: 'CONVOCATION (Light)', varc: 'Review VA Error Log: Solve 5 missed PJ/PS sets (30 min).', dilr: '', qa: 'QA Formulas: Write down all Arithmetic formulas (1 hr).' },
+            { day: 9, date: 'Nov 13', phase: 'II', goal: 'Intensification & Execution', focus: 'CONVOCATION (Light)', varc: 'Read 3 diverse RC Passages slowly for comprehension (1 hr).', dilr: 'DILR: Review Set Types/Frameworks (30 min).', qa: '' },
+            { day: 10, date: 'Nov 14', phase: 'II', goal: 'Intensification & Execution', focus: 'MOCK 3 DAY', varc: 'Full Mock Test (2 hrs) + Analysis (1.5 hrs). Refine strategy.', dilr: '', qa: '' },
+            { day: 11, date: 'Nov 15', phase: 'II', goal: 'Intensification & Execution', focus: 'P2: Algebra', varc: 'Review VA Error Log (PJ/PS) + 2 New RC Passages', dilr: '2 DILR Sets: Linear/Circular Arrangement', qa: 'Algebra: Linear/Quadratic Equations Concepts/Practice' },
+            { day: 12, date: 'Nov 16', phase: 'II', goal: 'Intensification & Execution', focus: 'P2: Algebra', varc: '1 VARC Sectional Test (40 mins) + 1 hr Analysis', dilr: '2 DILR Sets: Tournaments/Games', qa: 'Algebra: Simple Functions & Inequalities Practice' },
+            { day: 13, date: 'Nov 17', phase: 'II', goal: 'Intensification & Execution', focus: 'MOCK 4 DAY', varc: 'Full Mock Test (2 hrs) + Analysis (1.5 hrs).', dilr: '', qa: '' },
+            { day: 14, date: 'Nov 18', phase: 'II', goal: 'Intensification & Execution', focus: 'P2: Geometry', varc: '2 RC Passages + 10 mixed VA questions (PJ/PS)', dilr: '1 DILR Sectional Test (40 mins) + Analysis', qa: 'Geometry: Review all essential formulas' },
+            { day: 15, date: 'Nov 19', phase: 'II', goal: 'Intensification & Execution', focus: 'P1: Arithmetic', varc: '1 VARC Sectional Test (40 mins) + 1 hr Analysis', dilr: '2 DILR Sets: Distribution', qa: 'Arithmetic: High-level mixed practice (Tougher questions)' },
+            { day: 16, date: 'Nov 20', phase: 'II', goal: 'Intensification & Execution', focus: 'MOCK 5 DAY', varc: 'Full Mock Test (2 hrs) + Analysis (1.5 hrs).', dilr: '', qa: '' },
+            { day: 17, date: 'Nov 21', phase: 'II', goal: 'Intensification & Execution', focus: 'P3: Number System', varc: '2 RC Passages + 10 mixed VA questions (PJ/PS)', dilr: 'Reflect & Re-solve: 2 DILR Sets from Mock Error Log', qa: 'Number System: Review Divisibility Rules & Remainder basics' },
+            { day: 18, date: 'Nov 22', phase: 'II', goal: 'Intensification & Execution', focus: 'P2: Algebra', varc: '1 VARC Sectional Test (40 mins) + 1 hr Analysis', dilr: '2 DILR Sets: Logical Conditions', qa: 'Algebra: Roots, Max/Min of Quadratic Equations Practice' },
+            { day: 19, date: 'Nov 23', phase: 'III', goal: 'Final Polish & Rest', focus: 'MOCK 6 DAY', varc: 'Full Mock Test (2 hrs) + Analysis (1.5 hrs). Strategy lock-down.', dilr: '', qa: '' },
+            { day: 20, date: 'Nov 24', phase: 'III', goal: 'Final Polish & Rest', focus: 'P2: Mixed QA', varc: 'Review VA Error Log (PJ/PS) + 2 New RC Passages', dilr: '1 DILR Sectional Test (40 mins) + Analysis', qa: 'QA: 1 QA Sectional Test (40 mins) + Analysis' },
+            { day: 21, date: 'Nov 25', phase: 'III', goal: 'Final Polish & Rest', focus: 'MOCK 7 DAY', varc: 'Full Mock Test (2 hrs) + Analysis (1.5 hrs). FINAL MOCK REVIEW.', dilr: '', qa: '' },
+            { day: 22, date: 'Nov 26', phase: 'III', goal: 'Final Polish & Rest', focus: 'Phase III: Revision Day', varc: 'QA: Rapid-fire review of all Arithmetic and Algebra formulas.', dilr: 'DILR: Review 6-8 sets from your Error Log', qa: 'VARC: Read 2 RC passages for comprehension.' },
+            { day: 23, date: 'Nov 27', phase: 'III', goal: 'Final Polish & Rest', focus: 'Phase III: Confidence Boost', varc: 'DILR: Solve 2 recent successful DILR sets', dilr: 'QA: Solve 20-30 medium-difficulty questions from topics you are strongest in.', qa: 'VARC: Review 10 specific VA error points.' },
+            { day: 24, date: 'Nov 28', phase: 'III', goal: 'Final Polish & Rest', focus: 'MOCK 8 - LAST MOCK', varc: 'Full Mock Test (2 hrs). Spend only 1 hour on high-level analysis.', dilr: '', qa: '' },
+            { day: 25, date: 'Nov 29', phase: 'III', goal: 'Final Polish & Rest', focus: 'Light Revision', varc: 'MIND REST: Only read an interesting book/article for 1 hour. Review key QA formulas and VA rules briefly.', dilr: '', qa: '' },
+            { day: 26, date: 'Nov 30', phase: 'III', goal: 'Final Polish & Rest', focus: 'EXAM EVE', varc: 'COMPLETE REST. Do zero studying. Watch a movie, eat well, and ensure you go to bed early.', dilr: '', qa: '' }
+        ];
 
-    const MTA_PROTOCOL = [
-        { title: "1. The Easy Review (60 mins)", content: "Look only at questions you attempted but got wrong. Why did you miss them? Was it a silly error or a concept gap?" },
-        { title: "2. The Hidden Gems (90 mins)", content: "Look at questions you skipped (left unattempted). Go back and solve them without a timer. Could you have solved them in 2 minutes? These are potential score boosters." },
-        { title: "3. The Strategy Fix (30 mins)", content: "Identify which type of question you spent too much time on. Write down a rule for the next mock (e.g., 'Skip Time & Work questions if I don\'t see the solution in 30 seconds')." },
-        { title: "4. Deep Dive (90 mins)", content: "Pick one concept that you consistently fail (e.g., Probability). Spend the rest of the time solving similar problems from that one area." }
-    ];
-    
-    // --- STATE & UTILITIES ---
-    let currentDay = parseInt(localStorage.getItem('catCurrentDay')) || 1;
-    let taskCompletionStatus = JSON.parse(localStorage.getItem('catTaskStatus')) || {};
-    let chatHistory = [];
+        let currentDay = 1;
+        let completionStatus = new Array(26).fill(false);
+        let currentView = 'today';
+        let progressChart;
 
-    function saveState() {
-        localStorage.setItem('catCurrentDay', currentDay);
-        localStorage.setItem('catTaskStatus', JSON.stringify(taskCompletionStatus));
-        updateProgressChart();
-        updateDailyProgress();
-    }
+        const navButtons = document.querySelectorAll('.nav-button');
+        const appViews = document.querySelectorAll('.app-view');
+        const daySlider = document.getElementById('day-slider');
+        const dayLabel = document.getElementById('day-label');
+        const todayTitle = document.getElementById('today-title');
+        const todayPhase = document.getElementById('today-phase');
+        const taskVarc = document.getElementById('task-varc');
+        const taskDilr = document.getElementById('task-dilr');
+        const taskQa = document.getElementById('task-qa');
+        const cardVarc = document.getElementById('card-varc');
+        const cardDilr = document.getElementById('card-dilr');
+        const cardQa = document.getElementById('card-qa');
+        const markCompleteBtn = document.getElementById('mark-complete-btn');
+        const scheduleTableBody = document.getElementById('schedule-table-body');
+        const progressGrid = document.getElementById('progress-grid');
+        const chartCtx = document.getElementById('progress-chart').getContext('2d');
 
-    function getTaskKey(day, index) {
-        return `D${day}_T${index}`;
-    }
+        function renderTodayView() {
+            const dayData = scheduleData[currentDay - 1];
 
-    function toggleTask(day, index) {
-        const key = getTaskKey(day, index);
-        const isChecked = !taskCompletionStatus[key];
-        taskCompletionStatus[key] = isChecked;
-        saveState();
-    }
-    
-    // --- GEMINI API FUNCTIONS ---
+            dayLabel.textContent = dayData.day;
+            todayTitle.textContent = `Day ${dayData.day}: ${dayData.focus} (${dayData.date})`;
+            todayPhase.textContent = `Phase ${dayData.phase}: ${dayData.goal}`;
+            
+            // 1. Reset card visibility and width
+            cardVarc.classList.remove('hidden', 'md:col-span-3');
+            cardDilr.classList.remove('hidden', 'md:col-span-3');
+            cardQa.classList.remove('hidden', 'md:col-span-3');
+            
+            // 2. Populate and determine visibility
+            const varcContent = dayData.varc && dayData.varc !== '-' ? dayData.varc : '';
+            const dilrContent = dayData.dilr && dayData.dilr !== '-' ? dayData.dilr : '';
+            const qaContent = dayData.qa && dayData.qa !== '-' ? dayData.qa : '';
 
-    // Utility function for exponential backoff
-    async function fetchWithRetry(url, options, maxRetries = 3) {
-        for (let i = 0; i < maxRetries; i++) {
-            try {
-                const response = await fetch(url, options);
-                if (response.status === 429) { // Too Many Requests
-                    const delay = Math.pow(2, i) * 1000;
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    continue;
-                }
-                if (!response.ok) {
-                     // Check if the body contains a JSON response with an error message
-                    try {
-                        const errorBody = await response.json();
-                        throw new Error(`API Error ${response.status}: ${errorBody.error.message || response.statusText}`);
-                    } catch (e) {
-                         // Fallback for non-JSON or other errors
-                         throw new Error(`API Error ${response.status}: ${response.statusText}`);
-                    }
-                }
-                return response;
-            } catch (error) {
-                if (i === maxRetries - 1) throw error;
+            if (varcContent) { taskVarc.textContent = varcContent; } else { cardVarc.classList.add('hidden'); }
+            if (dilrContent) { taskDilr.textContent = dilrContent; } else { cardDilr.classList.add('hidden'); }
+            if (qaContent) { taskQa.textContent = qaContent; } else { cardQa.classList.add('hidden'); }
+
+            // 3. Adjust layout if only one card is visible
+            const visibleCount = (varcContent ? 1 : 0) + (dilrContent ? 1 : 0) + (qaContent ? 1 : 0);
+            
+            if (visibleCount === 1) {
+                if (varcContent) cardVarc.classList.add('md:col-span-3');
+                if (dilrContent) cardDilr.classList.add('md:col-span-3');
+                if (qaContent) cardQa.classList.add('md:col-span-3');
+            } else {
+                cardVarc.classList.remove('md:col-span-3');
+                cardDilr.classList.remove('md:col-span-3');
+                cardQa.classList.remove('md:col-span-3');
+            }
+
+            updateMarkCompleteButton();
+        }
+
+        function updateMarkCompleteButton() {
+            const isComplete = completionStatus[currentDay - 1];
+            if (isComplete) {
+                markCompleteBtn.textContent = `Day ${currentDay} Complete! (Undo)`;
+                markCompleteBtn.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+                markCompleteBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            } else {
+                markCompleteBtn.textContent = `Mark Day ${currentDay} as Complete`;
+                markCompleteBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                markCompleteBtn.classList.add('bg-amber-600', 'hover:bg-amber-700');
             }
         }
-    }
 
-    function showLoading(isLoading, elementId = 'chat-loading') {
-        const loadingEl = document.getElementById(elementId);
-        if (isLoading) {
-            loadingEl.classList.remove('hidden');
-        } else {
-            loadingEl.classList.add('hidden');
+        function renderScheduleView() {
+            if (scheduleTableBody.children.length > 0) return; 
+
+            scheduleData.forEach(day => {
+                const isLightDay = day.focus.includes('Light') || day.focus.includes('EVE');
+                const rowClass = isLightDay ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-stone-50';
+                
+                const row = document.createElement('tr');
+                row.className = `${rowClass} cursor-pointer`;
+                row.dataset.day = day.day;
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">${day.day}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-amber-700 font-semibold">${day.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">${day.focus}</td>
+                    <td class="px-6 py-4 text-sm text-stone-500">${day.varc}</td>
+                    <td class="px-6 py-4 text-sm text-stone-500">${day.dilr}</td>
+                    <td class="px-6 py-4 text-sm text-stone-500">${day.qa}</td>
+                `;
+                row.addEventListener('click', () => {
+                    currentDay = parseInt(day.day, 10);
+                    daySlider.value = currentDay;
+                    switchView('today');
+                });
+                scheduleTableBody.appendChild(row);
+            });
         }
-    }
 
-    function addMessageToChat(text, sender) {
-        const chatMessages = document.getElementById('chat-messages');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `${sender}-message max-w-[85%] p-3 text-sm`;
-        
-        // Convert Markdown to simple HTML for display
-        const htmlText = text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-            .replace(/(\r\n|\n|\r)/gm, '<br>') // Line breaks
-            .replace(/\$/g, ''); // Remove math delimiters for simple rendering
-            
-        messageDiv.innerHTML = htmlText;
-        chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
-    }
-
-    async function generateContent(userPrompt, systemInstruction) {
-        showLoading(true);
-
-        const payload = {
-            contents: [{ parts: [{ text: userPrompt }] }],
-            systemInstruction: { parts: [{ text: systemInstruction }] },
-        };
-
-        const options = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        };
-
-        try {
-            const response = await fetchWithRetry(apiUrl, options);
-            const result = await response.json();
-            
-            const candidate = result.candidates?.[0];
-            const text = candidate?.content?.parts?.[0]?.text || "Sorry, I couldn't generate a response. Please try again or rephrase your query.";
-            
-            return text;
-
-        } catch (error) {
-            console.error("Gemini API Error:", error);
-            return `Oops! My study circuits failed. Check the console for errors. (${error.message})`;
-        } finally {
-            showLoading(false);
-        }
-    }
-
-    // --- FEATURE 1: Quick Prep Assistant ---
-    async function handleChatSend() {
-        const input = document.getElementById('chat-input');
-        const userQuery = input.value.trim();
-        input.value = '';
-
-        if (!userQuery) return;
-        
-        addMessageToChat(userQuery, 'user');
-
-        const systemPrompt = "You are the CAT Prep Assistant, a supportive and knowledgeable tutor. Your goal is to provide concise formulas, quick concept recaps (max 3-4 points), or highly motivational advice. Always keep your response focused on CAT prep. If the user asks for a 'pep talk', deliver a short, inspiring message to combat overwhelm.";
-        
-        const assistantResponse = await generateContent(userQuery, systemPrompt);
-        addMessageToChat(assistantResponse, 'assistant');
-    }
-    
-    // --- FEATURE 2: Drill Master ---
-    async function generateDrills(taskText) {
-        const drillOutput = document.getElementById('drill-output');
-        const drillContent = document.getElementById('drill-content');
-        
-        drillOutput.classList.remove('hidden');
-        drillContent.innerHTML = 'Loading fresh practice questions...';
-        showLoading(true, 'drill-content'); // Use a localized loading indicator
-
-        const systemPrompt = `You are the CAT Drill Master. The user has a task: "${taskText}". Generate exactly 3 relevant practice questions that are CAT exam difficulty (medium-hard) based on this task description. For quantitative questions, ensure they are solvable and include the necessary data. For VARC questions, provide the passage or context clearly. Format the output with clear numbering and use markdown for readability. Do not include answers or explanations.`;
-        
-        const prompt = `Generate 3 CAT practice questions for the task: "${taskText}".`;
-
-        const generatedText = await generateContent(prompt, systemPrompt);
-        
-        drillContent.innerHTML = generatedText;
-        showLoading(false, 'drill-content'); // Hide localized loading
-    }
-
-
-    // --- RENDER FUNCTIONS ---
-    function updateDailyProgress() {
-        const totalTasks = PLAN_DATA[currentDay - 1].tasks.length;
-        let completedTasks = 0;
-        
-        for (let i = 0; i < totalTasks; i++) {
-            const key = getTaskKey(currentDay, i);
-            if (taskCompletionStatus[key]) {
-                completedTasks++;
+        function renderProgressView() {
+            progressGrid.innerHTML = '';
+            for (let i = 0; i < 26; i++) {
+                const dayBox = document.createElement('div');
+                dayBox.className = `w-10 h-10 flex items-center justify-center font-semibold rounded ${completionStatus[i] ? 'bg-green-600 text-white' : 'bg-stone-200 text-stone-500'}`;
+                dayBox.textContent = i + 1;
+                progressGrid.appendChild(dayBox);
             }
-        }
-        
-        document.getElementById('daily-progress-count').textContent = completedTasks;
-        document.getElementById('daily-total-count').textContent = totalTasks;
-    }
-
-    function createTaskList(day) {
-        const item = PLAN_DATA[day - 1];
-        const taskList = document.getElementById('task-list');
-        taskList.innerHTML = '';
-        
-        item.tasks.forEach((task, index) => {
-            const key = getTaskKey(day, index);
-            const isChecked = !!taskCompletionStatus[key];
-
-            const taskDiv = document.createElement('div');
-            taskDiv.className = `task-item flex items-start p-3 rounded-lg border border-gray-100 ${isChecked ? 'checked bg-gray-50' : 'bg-white'}`;
-            taskDiv.setAttribute('data-index', index);
             
-            // Task Checkbox (Clicking text toggles checkbox)
-            taskDiv.onclick = (e) => {
-                // Prevent check on slot name or drill button click
-                if (e.target.closest('.slot-name') || e.target.closest('.drill-button')) return; 
-                toggleTask(day, index);
-                renderDay(currentDay); // Re-render to update visual state
+            const completedCount = completionStatus.filter(Boolean).length;
+            const remainingCount = 26 - completedCount;
+
+            const chartData = {
+                labels: ['Completed', 'Remaining'],
+                datasets: [{
+                    data: [completedCount, remainingCount],
+                    backgroundColor: [
+                        '#16a34a', 
+                        '#e5e5e5'  
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 2
+                }]
             };
 
-            // Task Content
-            let innerHTML = `
-                <input type="checkbox" class="task-checkbox mt-1 mr-4" ${isChecked ? 'checked' : ''} disabled>
-                <div class="flex-1 min-w-0">
-                    <span class="task-text text-gray-800 font-medium break-words">${task.text}</span>
-                    <span class="slot-name ml-2 text-xs font-semibold px-2 py-0.5 rounded-full text-white ${task.slot.includes('Slot') ? 'bg-green-600' : (task.slot.includes('Night') ? 'bg-indigo-600' : 'bg-gray-600')}">${task.slot}</span>
-                </div>
-            `;
-            
-            // Drill Master Button
-            if (task.type === 'QUANT' || task.type === 'DILR' || task.type === 'VARC') {
-                innerHTML += `
-                    <button class="drill-button ml-3 p-1.5 text-xs rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200 transition duration-150 font-bold" 
-                            onclick="event.stopPropagation(); generateDrills('${task.text}')">
-                        ✨ Drill
-                    </button>
-                `;
-            }
-
-            taskDiv.innerHTML = innerHTML;
-            taskList.appendChild(taskDiv);
-        });
-
-        // Update titles and headers
-        const dayTitle = item.full_mock ? 'Mock Test Day' : 'Drill Day';
-        document.getElementById('plan-day-title').textContent = `Day ${item.day} (${item.date}): ${item.title}`;
-        document.getElementById('current-day-display').textContent = item.day;
-        
-        updateDailyProgress();
-    }
-
-    function createDaySelector() {
-        const selector = document.getElementById('day-selector');
-        PLAN_DATA.forEach(item => {
-            const button = document.createElement('button');
-            button.className = 'nav-button px-3 py-1 text-sm rounded-full font-semibold transition duration-150';
-            button.dataset.day = item.day;
-            button.textContent = `Day ${item.day}`;
-            button.addEventListener('click', () => {
-                currentDay = item.day;
-                saveState();
-                renderDay(item.day);
-                // Hide drill output when changing days
-                document.getElementById('drill-output').classList.add('hidden');
-            });
-            selector.appendChild(button);
-        });
-    }
-
-    function createMTAAccordion() {
-        const accordion = document.getElementById('mta-accordion');
-        accordion.innerHTML = '';
-        MTA_PROTOCOL.forEach((item, index) => {
-            const id = `mta-step-${index}`;
-
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'border-b pb-2';
-
-            const button = document.createElement('button');
-            button.className = 'w-full text-left py-2 font-semibold flex justify-between items-center text-md accent-color hover:opacity-80 transition duration-150';
-            button.textContent = item.title;
-            button.setAttribute('data-target', id);
-            button.innerHTML += '<span class="text-xl text-gray-500 transform transition duration-200">⮟</span>';
-
-            const contentDiv = document.createElement('div');
-            contentDiv.id = id;
-            contentDiv.className = 'mt-1 text-gray-700 pb-3 hidden text-sm';
-            contentDiv.innerHTML = `<p>${item.content}</p>`;
-
-            button.addEventListener('click', (e) => {
-                const icon = e.currentTarget.querySelector('span');
-                icon.classList.toggle('rotate-180');
-                contentDiv.classList.toggle('hidden');
-            });
-
-            itemDiv.appendChild(button);
-            itemDiv.appendChild(contentDiv);
-            accordion.appendChild(itemDiv);
-        });
-    }
-
-    let progressChart;
-    function updateProgressChart() {
-        const totalDays = 35;
-        // Calculate total completed days (a day is complete if all its tasks are checked)
-        let daysCompleted = 0;
-        PLAN_DATA.forEach(dayItem => {
-            const day = dayItem.day;
-            const totalTasks = dayItem.tasks.length;
-            let completedTasks = 0;
-            for (let i = 0; i < totalTasks; i++) {
-                if (taskCompletionStatus[getTaskKey(day, i)]) {
-                    completedTasks++;
-                }
-            }
-            if (completedTasks === totalTasks) {
-                daysCompleted++;
-            }
-        });
-
-        const remaining = totalDays - daysCompleted;
-        const completionPercentage = (daysCompleted / totalDays) * 100;
-
-        document.getElementById('days-remaining').textContent = remaining;
-        document.getElementById('day-progress-bar').style.width = `${completionPercentage}%`;
-        document.getElementById('completion-percentage-text').textContent = `${Math.round(completionPercentage)}%`;
-
-
-        const ctx = document.getElementById('progress-chart').getContext('2d');
-        if (progressChart) {
-            progressChart.destroy();
-        }
-
-        progressChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Days Completed', 'Days Remaining'],
-                datasets: [{
-                    data: [daysCompleted, remaining],
-                    backgroundColor: ['#7d4ba9', '#e3d9f0'],
-                    borderColor: ['white', 'white'],
-                    borderWidth: 2,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '80%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#522f67',
-                            font: { size: 14 }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => {
-                                let label = context.label || '';
-                                if (label) { label += ': '; }
-                                label += context.parsed;
-                                return label;
+            if (progressChart) {
+                progressChart.data = chartData;
+                progressChart.update();
+            } else {
+                progressChart = new Chart(chartCtx, {
+                    type: 'doughnut',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            tooltip: {
+                                enabled: true
                             }
                         }
                     }
+                });
+            }
+        }
+
+        function switchView(view) {
+            currentView = view;
+            appViews.forEach(v => {
+                if (v.id === `${view}-view`) {
+                    v.classList.remove('hidden');
+                } else {
+                    v.classList.add('hidden');
                 }
-            }
-        });
-    }
+            });
 
-    function renderDay(day) {
-        // Update day selector buttons
-        document.querySelectorAll('.nav-button').forEach(btn => {
-            btn.classList.remove('active');
-            if (parseInt(btn.dataset.day) === day) {
-                btn.classList.add('active');
-            }
-        });
-        
-        // Render the task list for the selected day
-        createTaskList(day);
-    }
-    
-    // --- INITIALIZATION ---
-    window.onload = function() {
-        createDaySelector();
-        createMTAAccordion();
-        renderDay(currentDay);
-        updateProgressChart(); // Initial chart rendering
+            navButtons.forEach(btn => {
+                if (btn.dataset.view === view) {
+                    btn.classList.add('text-amber-600', 'border-amber-600');
+                    btn.classList.remove('text-stone-500', 'hover:text-stone-700', 'border-transparent', 'hover:border-stone-300');
+                } else {
+                    btn.classList.remove('text-amber-600', 'border-amber-600');
+                    btn.classList.add('text-stone-500', 'hover:text-stone-700', 'border-transparent', 'hover:border-stone-300');
+                }
+            });
 
-        // Event listener for chat submission
-        document.getElementById('chat-send-btn').addEventListener('click', handleChatSend);
-        document.getElementById('chat-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                handleChatSend();
+            if (view === 'today') {
+                renderTodayView();
+            } else if (view === 'schedule') {
+                renderScheduleView();
+            } else if (view === 'progress') {
+                renderProgressView();
+            }
+        }
+
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                switchView(button.dataset.view);
+            });
+        });
+
+        daySlider.addEventListener('input', (e) => {
+            currentDay = parseInt(e.target.value, 10);
+            renderTodayView();
+        });
+
+        markCompleteBtn.addEventListener('click', () => {
+            completionStatus[currentDay - 1] = !completionStatus[currentDay - 1];
+            updateMarkCompleteButton();
+            if (currentView === 'progress') {
+                renderProgressView();
             }
         });
-    };
-</script>
+
+        document.addEventListener('DOMContentLoaded', () => {
+            switchView('today');
+        });
+    </script>
 </body>
 </html>
